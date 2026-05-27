@@ -43,7 +43,7 @@
 
     /* 반응형 폰트 베이스 */
     --fs-xs:   clamp(9px,  1.8vw, 11px);
-    --fs-sm:   clamp(11px, 2.2vw, 13px);
+    --fs-sm:   clamp(12px, 2.2vw, 13px);
     --fs-md:   clamp(13px, 2.6vw, 15px);
     --fs-lg:   clamp(15px, 3.2vw, 18px);
     --fs-xl:   clamp(18px, 4vw,   24px);
@@ -1402,13 +1402,21 @@ const FILTER_DATA = {
   }
 };
 
+/* 차트 원본 데이터 (완전 복원용 — 초기 mkChart 값과 동일) */
+const ORIGIN = {
+  moldWait:   { labels:['1월','2월','3월','4월','5월'], result:[156,132,159,135,121],       goal:[150,120,100,50,50] },
+  maint:      { labels:['1월','2월','3월','4월','5월'], result:[793,858,725,679,618],       goal:[757,757,757,757,757] },
+  moldCost:   { labels:['1월','2월','3월','4월','5월'], result:[2135,1937,1391,2423,946],   goal:[2000,2000,2000,1900,1900] },
+  compliance: { labels:['24년','25년','1월','2월','3월','4월','5월'], result:[96.8,96.8,95.6,94.6,95.9,97.2,96.4], goal:[97,97,97,97,97,97,97] }
+};
+
 function patchChart(id, labels, resultData, goalData) {
   const ch = charts[id];
   if (!ch) return;
-  ch.data.labels = labels;
-  if (ch.data.datasets[0]) ch.data.datasets[0].data = resultData;
-  if (ch.data.datasets[1] && goalData) ch.data.datasets[1].data = goalData;
-  ch.update('active');
+  ch.data.labels = [...labels];
+  if (ch.data.datasets[0]) ch.data.datasets[0].data = [...resultData];
+  if (ch.data.datasets[1]) ch.data.datasets[1].data = goalData ? [...goalData] : [];
+  ch.update();
 }
 
 let currentFilter = 'month';
@@ -1431,8 +1439,20 @@ function applyFilter(unit, btn) {
 }
 
 function resetData() {
-  applyFilter('month', document.getElementById('fb-month'));
+  /* 1. 필터 버튼 원위치 */
+  currentFilter = 'month';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fb-month').classList.add('active');
+  document.getElementById('filterInfo').textContent = '2026년 1~5월';
 
+  /* 2. 모든 차트를 원본 데이터로 완전 복원 */
+  patchChart('chartMoldWait',        ORIGIN.moldWait.labels,   ORIGIN.moldWait.result,   ORIGIN.moldWait.goal);
+  patchChart('chartMaint',           ORIGIN.maint.labels,      ORIGIN.maint.result,      ORIGIN.maint.goal);
+  patchChart('chartMoldCost',        ORIGIN.moldCost.labels,   ORIGIN.moldCost.result,   ORIGIN.moldCost.goal);
+  patchChart('chartCompliance',      ORIGIN.compliance.labels, ORIGIN.compliance.result, ORIGIN.compliance.goal);
+  patchChart('chartComplianceTrend', ORIGIN.compliance.labels, ORIGIN.compliance.result, ORIGIN.compliance.goal);
+
+  /* 3. 업로드 영역 초기화 */
   const zone = document.getElementById('uploadZone');
   if (zone) {
     zone.innerHTML = '<div class="uz-icon">📂</div><h3>엑셀 파일을 드래그하거나 클릭하여 업로드</h3><p>금형파트.xlsx 형식 지원 · 데이터 자동 파싱</p>';
@@ -1442,6 +1462,7 @@ function resetData() {
   const fi = document.getElementById('fileInput');
   if (fi) fi.value = '';
 
+  /* 4. 상태 표시 초기화 */
   const ds  = document.getElementById('dataStatus');
   const dst = document.getElementById('dataStatusText');
   if (ds)  ds.classList.remove('uploaded');
