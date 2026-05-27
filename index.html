@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d2240">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="주간실적">
+<meta name="application-name" content="주간실적">
+<meta name="description" content="김천사업장 생산기술팀 금형파트 주간 실적 보고">
+<title>⚙️ 생산기술 주간실적 보고</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  /* ── 기본 변수 ── */
+  :root {
+    --navy:    #0d2240;
+    --navy2:   #163461;
+    --blue:    #1a6fc4;
+    --blue2:   #2589e8;
+    --accent:  #f4800a;
+    --green:   #1aaa5e;
+    --red:     #e03e3e;
+    --yellow:  #f0b429;
+    --bg:      #eef2f8;
+    --card:    #ffffff;
+    --border:  #d0dae8;
+    --text1:   #0d2240;
+    --text2:   #4a5568;
+    --text3:   #8c99ab;
+
+    /* 반응형 폰트 베이스 */
+    --fs-xs:   clamp(9px,  1.8vw, 11px);
+    --fs-sm:   clamp(11px, 2.2vw, 13px);
+    --fs-md:   clamp(13px, 2.6vw, 15px);
+    --fs-lg:   clamp(15px, 3.2vw, 18px);
+    --fs-xl:   clamp(18px, 4vw,   24px);
+    --fs-2xl:  clamp(22px, 5vw,   32px);
+
+    --radius:  10px;
+    --shadow:  0 2px 12px rgba(13,34,64,.10);
+    --shadow2: 0 4px 24px rgba(13,34,64,.15);
+  }
+
+  /* 모바일 전용 폰트 업스케일 */
+  @media (max-width: 600px) {
+    :root {
+      --fs-xs:  12px;
+      --fs-sm:  14px;
+      --fs-md:  15px;
+      --fs-lg:  17px;
+      --fs-xl:  20px;
+      --fs-2xl: 26px;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--bg);
+    font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text1);
+    min-height: 100vh;
+    font-size: var(--fs-md);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── 헤더 ── */
+  .app-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1a4a8a 100%);
+    color: #fff;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,.3);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(10px,2vw,16px) clamp(14px,3vw,28px);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: clamp(30px,5vw,40px);
+    height: clamp(30px,5vw,40px);
+    background: var(--blue2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(14px,3vw,20px);
+    flex-shrink: 0;
+  }
+  .header-title-group h1 {
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .header-title-group p {
+    font-size: var(--fs-xs);
+    opacity: .7;
+    margin-top: 2px;
+  }
+  .header-meta {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .header-meta .week-badge {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    display: inline-block;
+    backdrop-filter: blur(4px);
+  }
+  .header-meta .date-text {
+    font-size: var(--fs-xs);
+    opacity: .6;
+    margin-top: 4px;
+  }
+  /* ── 설치 버튼 ── */
+  .install-btn {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    color: #fff;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    backdrop-filter: blur(4px);
+    transition: background .2s;
+    font-family: inherit;
+  }
+  .install-btn:hover { background: rgba(255,255,255,.25); }
+  .install-btn.visible { display: inline-flex; }
+
+  /* ── 탭 ── */
+  .tab-bar {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 clamp(8px,2vw,20px);
+    background: var(--navy2);
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.55);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    padding: clamp(8px,1.5vw,12px) clamp(14px,3vw,22px);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #4da6ff;
+  }
+  .tab-btn:hover { color: rgba(255,255,255,.85); }
+
+  /* ── 콘텐츠 ── */
+  .content { padding: clamp(12px,2.5vw,24px); max-width: 1200px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 섹션 헤더 ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: clamp(10px,2vw,16px);
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .section-header .dot {
+    width: 8px; height: 8px;
+    background: var(--blue2);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .section-header .sub { font-size: var(--fs-xs); color: var(--text3); margin-left: auto; }
+
+  /* ── KPI 카드 그리드 ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(140px,28vw,220px), 1fr));
+    gap: clamp(8px,1.5vw,14px);
+    margin-bottom: clamp(16px,3vw,28px);
+  }
+  .kpi-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: clamp(12px,2.5vw,18px);
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--blue);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content:'';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    opacity: .06;
+    background: var(--blue2);
+  }
+  .kpi-card.good  { border-left-color: var(--green); }
+  .kpi-card.warn  { border-left-color: var(--yellow); }
+  .kpi-card.alert { border-left-color: var(--red); }
+  .kpi-card.info  { border-left-color: var(--accent); }
+  .kpi-card.good::before  { background: var(--green); }
+  .kpi-card.warn::before  { background: var(--yellow); }
+  .kpi-card.alert::before { background: var(--red); }
+  .kpi-card.info::before  { background: var(--accent); }
+
+  .kpi-label {
+    font-size: var(--fs-xs);
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    color: var(--text1);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-value span { font-size: var(--fs-sm); font-weight: 500; color: var(--text3); margin-left: 2px; }
+  .kpi-sub {
+    font-size: var(--fs-xs);
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .kpi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: auto;
+  }
+  .badge-good  { background:#e8f8f0; color: var(--green); }
+  .badge-warn  { background:#fff8e6; color: #b07a00; }
+  .badge-alert { background:#fef0f0; color: var(--red); }
+  .badge-info  { background:#fff3e8; color: var(--accent); }
+
+  /* ── 차트 카드 ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(260px,45vw,480px), 1fr));
+    gap: clamp(10px,2vw,18px);
+    margin-bottom: clamp(16px,3vw,28px);
+  }
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(12px,2.5vw,20px);
+  }
+  .chart-card .chart-title {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-card .chart-title .ctag {
+    font-size: var(--fs-xs);
+    background: var(--bg);
+    color: var(--text3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+  }
+  .chart-wrap { position: relative; height: clamp(160px,30vw,220px); }
+
+  /* ── 테이블 ── */
+  .table-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: clamp(10px,2vw,18px);
+    overflow: hidden;
+  }
+  .table-card .table-head {
+    background: var(--navy);
+    color: #fff;
+    padding: clamp(10px,2vw,14px) clamp(14px,3vw,20px);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  thead tr { background: #f0f5fb; }
+  thead th {
+    padding: clamp(8px,1.5vw,11px) clamp(10px,2vw,14px);
+    text-align: center;
+    font-weight: 700;
+    color: var(--navy2);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    font-size: var(--fs-xs);
+    letter-spacing: .3px;
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid #f0f3f8; }
+  tbody tr:hover { background: #f7f9fd; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: clamp(8px,1.5vw,10px) clamp(10px,2vw,14px);
+    text-align: center;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; color: var(--text1); }
+  .td-good  { color: var(--green)  !important; font-weight: 700; }
+  .td-warn  { color: #b07a00 !important; font-weight: 700; }
+  .td-alert { color: var(--red)    !important; font-weight: 700; }
+  .td-blue  { color: var(--blue)   !important; font-weight: 700; }
+  .row-goal { background: #f7f9fb !important; }
+  .row-goal td { color: var(--text3) !important; font-size: var(--fs-xs); }
+  .row-total { background: #f0f5fb !important; }
+  .row-total td { font-weight: 700 !important; color: var(--navy) !important; }
+
+  /* ── 진행 바 ── */
+  .progress-bar-wrap {
+    background: #eef2f8;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width .6s ease;
+  }
+  .pb-good  { background: linear-gradient(90deg, #1aaa5e, #2ec47a); }
+  .pb-warn  { background: linear-gradient(90deg, #f0b429, #ffd166); }
+  .pb-alert { background: linear-gradient(90deg, #e03e3e, #ff6b6b); }
+  .pb-blue  { background: linear-gradient(90deg, var(--blue), var(--blue2)); }
+
+  /* ── 주간 요약 카드 ── */
+  .weekly-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(160px,32vw,240px),1fr));
+    gap: clamp(8px,1.5vw,14px);
+    margin-bottom: clamp(16px,3vw,28px);
+  }
+  .week-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(12px,2.5vw,16px);
+    border-top: 3px solid var(--border);
+  }
+  .week-card.current { border-top-color: var(--blue2); }
+  .week-card .wk-num {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 4px;
+  }
+  .week-card .wk-date { font-size: var(--fs-xs); color: var(--text3); margin-bottom: 10px; }
+  .week-card .wk-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 0; font-size: var(--fs-xs);
+    border-bottom: 1px solid #f0f3f8;
+  }
+  .week-card .wk-row:last-child { border-bottom: none; }
+  .week-card .wk-row .wk-val { font-weight: 700; font-size: var(--fs-sm); }
+
+  /* ── 상태 뱃지 ── */
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  .sd-green  { background: var(--green); }
+  .sd-yellow { background: var(--yellow); }
+  .sd-red    { background: var(--red); }
+  .sd-blue   { background: var(--blue2); }
+  .sd-gray   { background: #aaa; }
+
+  /* ── 금형 현황 그리드 ── */
+  .mold-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(100px,22vw,160px),1fr));
+    gap: clamp(6px,1.5vw,12px);
+    margin-bottom: clamp(16px,3vw,28px);
+  }
+  .mold-box {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(10px,2vw,14px);
+    text-align: center;
+  }
+  .mold-box .mb-icon { font-size: clamp(18px,4vw,26px); margin-bottom: 4px; }
+  .mold-box .mb-num {
+    font-size: clamp(18px,4vw,28px);
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+  .mold-box .mb-unit { font-size: var(--fs-xs); color: var(--text3); }
+  .mold-box .mb-label { font-size: var(--fs-xs); color: var(--text2); margin-top: 4px; font-weight: 600; }
+
+  /* ── 업로드 영역 ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: clamp(20px,4vw,40px);
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--card);
+    margin-bottom: clamp(12px,2.5vw,20px);
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--blue2); background: #f0f6ff; }
+  .upload-zone .uz-icon { font-size: clamp(28px,6vw,42px); margin-bottom: 8px; }
+  .upload-zone h3 { font-size: var(--fs-md); color: var(--navy); margin-bottom: 4px; }
+  .upload-zone p { font-size: var(--fs-xs); color: var(--text3); }
+  #fileInput { display: none; }
+
+  /* ── 보고서 인쇄 뷰 ── */
+  .report-header-block {
+    background: linear-gradient(135deg, var(--navy) 0%, #163461 100%);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: clamp(16px,3vw,28px);
+    margin-bottom: clamp(12px,2.5vw,20px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .report-header-block .rh-title {
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .report-header-block .rh-sub { font-size: var(--fs-sm); opacity: .75; }
+  .report-header-block .rh-meta {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .rh-meta-item { font-size: var(--fs-xs); opacity: .7; }
+  .rh-meta-item strong { opacity: 1; color: #fff; }
+
+  /* ── 스크롤바 ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #bdd0e8; border-radius: 4px; }
+
+  /* ── 인쇄 ── */
+  @media print {
+    .app-header, .tab-bar, .upload-zone { display: none !important; }
+    .tab-panel { display: block !important; }
+    .chart-card { break-inside: avoid; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ 헤더 ══ -->
+<header class="app-header">
+  <div class="header-top">
+    <div class="header-logo">
+      <div class="logo-icon">⚙️</div>
+      <div class="header-title-group">
+        <h1>생산기술 주간실적 보고</h1>
+        <p>김천사업장 생산기술팀 | 금형파트</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="week-badge" id="weekBadge">📅 2026년 5월 4주차</div>
+      <div class="date-text" id="headerDate">보고일: 2026.05.27</div>
+      <button class="install-btn" id="installBtn" onclick="installPWA()">📲 앱으로 설치</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('dashboard',this)">📊 대시보드</button>
+    <button class="tab-btn" onclick="switchTab('weekly',this)">📅 주간 현황</button>
+    <button class="tab-btn" onclick="switchTab('mold',this)">🔩 금형현황</button>
+    <button class="tab-btn" onclick="switchTab('compliance',this)">✅ 준수율</button>
+    <button class="tab-btn" onclick="switchTab('cost',this)">💰 비용현황</button>
+    <button class="tab-btn" onclick="switchTab('upload',this)">📂 데이터 업로드</button>
+  </div>
+</header>
+
+<div class="content">
+
+<!-- ══════════════════════════════
+     TAB 1 : 대시보드
+══════════════════════════════ -->
+<div class="tab-panel active" id="tab-dashboard">
+
+  <!-- 보고서 헤더 블록 -->
+  <div class="report-header-block">
+    <div class="rh-title">📋 2026년 5월 주간 KPI 종합 현황</div>
+    <div class="rh-sub">생산기술팀 금형파트 | 주간 실적 보고서</div>
+    <div class="rh-meta">
+      <div class="rh-meta-item">보고 기간 <strong>2026.05.01 ~ 05.27</strong></div>
+      <div class="rh-meta-item">작성 기준 <strong>2026.05.27</strong></div>
+      <div class="rh-meta-item">총 금형 <strong>1,068 벌</strong></div>
+    </div>
+  </div>
+
+  <!-- KPI 카드 -->
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>핵심 KPI 현황</h2>
+    <span class="sub">5월 누적 기준</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card good">
+      <div class="kpi-label">금형 대기</div>
+      <div class="kpi-value">121<span>벌</span></div>
+      <div class="kpi-sub">
+        목표 ≤50벌
+        <span class="kpi-badge badge-warn">목표초과</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-warn" style="width:70%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">설비정비 건수</div>
+      <div class="kpi-value">618<span>건</span></div>
+      <div class="kpi-sub">
+        목표 757건
+        <span class="kpi-badge badge-good">81.6%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:82%"></div></div>
+    </div>
+    <div class="kpi-card warn">
+      <div class="kpi-label">금형 매입비</div>
+      <div class="kpi-value">946<span>만원</span></div>
+      <div class="kpi-sub">
+        목표 ≤1,900만원
+        <span class="kpi-badge badge-good">49.8%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:50%"></div></div>
+    </div>
+    <div class="kpi-card info">
+      <div class="kpi-label">설비수선비</div>
+      <div class="kpi-value">1,400<span>만원</span></div>
+      <div class="kpi-sub">
+        목표 ≤2,900만원
+        <span class="kpi-badge badge-good">48.3%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:48%"></div></div>
+    </div>
+    <div class="kpi-card alert">
+      <div class="kpi-label">설비 구매비용</div>
+      <div class="kpi-value">13,030<span>만원</span></div>
+      <div class="kpi-sub">
+        목표 ≤3,000만원
+        <span class="kpi-badge badge-alert">초과</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-alert" style="width:100%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">SET-UP 준수율</div>
+      <div class="kpi-value">96.4<span>%</span></div>
+      <div class="kpi-sub">
+        목표 ≥97%
+        <span class="kpi-badge badge-warn">▽0.6%p</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-warn" style="width:96.4%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">총 금형 벌수</div>
+      <div class="kpi-value">1,068<span>벌</span></div>
+      <div class="kpi-sub">
+        양산중 109 / 대기 959
+        <span class="kpi-badge badge-blue" style="background:#e8f2ff;color:var(--blue)">운영중</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-blue" style="width:10%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">정비 대기</div>
+      <div class="kpi-value">127<span>벌</span></div>
+      <div class="kpi-sub">
+        소형 117 / 대형 10
+        <span class="kpi-badge badge-warn">관리중</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-warn" style="width:55%"></div></div>
+    </div>
+  </div>
+
+  <!-- 차트 그리드 -->
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>월별 추이 분석</h2>
+    <span class="sub">2026년 1~5월</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">🔩 금형 대기 추이 <span class="ctag">목표 ≤50벌</span></div>
+      <div class="chart-wrap"><canvas id="chartMoldWait"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🔧 설비정비 건수 <span class="ctag">목표 757건</span></div>
+      <div class="chart-wrap"><canvas id="chartMaint"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">💴 금형매입비 추이 <span class="ctag">목표 ≤1,900만원</span></div>
+      <div class="chart-wrap"><canvas id="chartMoldCost"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">✅ SET-UP 준수율 추이 <span class="ctag">목표 ≥97%</span></div>
+      <div class="chart-wrap"><canvas id="chartCompliance"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 종합 평가표 -->
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>KPI 종합 평가</h2>
+  </div>
+  <div class="table-card">
+    <div class="table-head">📋 5월 KPI 달성 현황 요약</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>목표</th>
+            <th>5월 실적</th>
+            <th>달성률</th>
+            <th>평가</th>
+            <th>전월 대비</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>금형 대기 (벌)</td>
+            <td class="row-goal-inline">≤ 50</td>
+            <td class="td-warn">121</td>
+            <td>-</td>
+            <td><span class="status-dot sd-yellow"></span>목표초과</td>
+            <td class="td-good">▼14 개선</td>
+          </tr>
+          <tr>
+            <td>설비정비 건수</td>
+            <td>757건</td>
+            <td class="td-good">618건</td>
+            <td class="td-good">81.6%</td>
+            <td><span class="status-dot sd-green"></span>양호</td>
+            <td class="td-warn">▼61 감소</td>
+          </tr>
+          <tr>
+            <td>금형 매입비 (만원)</td>
+            <td>≤ 1,900</td>
+            <td class="td-good">946</td>
+            <td class="td-good">49.8%</td>
+            <td><span class="status-dot sd-green"></span>목표이내</td>
+            <td class="td-good">▼1,477 절감</td>
+          </tr>
+          <tr>
+            <td>설비 수선비 (만원)</td>
+            <td>≤ 2,900</td>
+            <td class="td-good">1,400</td>
+            <td class="td-good">48.3%</td>
+            <td><span class="status-dot sd-green"></span>목표이내</td>
+            <td class="td-good">▼1,182 절감</td>
+          </tr>
+          <tr>
+            <td>설비 구매비용 (만원)</td>
+            <td>≤ 3,000</td>
+            <td class="td-alert">13,030</td>
+            <td class="td-alert">434%</td>
+            <td><span class="status-dot sd-red"></span>목표초과</td>
+            <td class="td-alert">▲11,280 증가</td>
+          </tr>
+          <tr>
+            <td>SET-UP 준수율</td>
+            <td>≥ 97.0%</td>
+            <td class="td-warn">96.4%</td>
+            <td class="td-warn">99.4%</td>
+            <td><span class="status-dot sd-yellow"></span>소폭 미달</td>
+            <td class="td-warn">▼0.8%p</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB 2 : 주간 현황
+══════════════════════════════ -->
+<div class="tab-panel" id="tab-weekly">
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>5월 주차별 금형 대기 현황</h2>
+    <span class="sub">일별 실적 기반</span>
+  </div>
+
+  <div class="weekly-cards">
+    <div class="week-card">
+      <div class="wk-num">1주차</div>
+      <div class="wk-date">5/04 ~ 5/07 (3일)</div>
+      <div class="wk-row"><span>평균 대기</span><span class="wk-val td-warn">127벌</span></div>
+      <div class="wk-row"><span>계획</span><span class="wk-val">80~90벌</span></div>
+      <div class="wk-row"><span>설비정비</span><span class="wk-val">25건</span></div>
+      <div class="wk-row"><span>SET-UP</span><span class="wk-val">57건</span></div>
+    </div>
+    <div class="week-card">
+      <div class="wk-num">2주차</div>
+      <div class="wk-date">5/08 ~ 5/14 (5일)</div>
+      <div class="wk-row"><span>평균 대기</span><span class="wk-val td-warn">133벌</span></div>
+      <div class="wk-row"><span>계획</span><span class="wk-val">70~80벌</span></div>
+      <div class="wk-row"><span>설비정비</span><span class="wk-val">67건</span></div>
+      <div class="wk-row"><span>SET-UP</span><span class="wk-val">117건</span></div>
+    </div>
+    <div class="week-card">
+      <div class="wk-num">3주차</div>
+      <div class="wk-date">5/15 ~ 5/21 (5일)</div>
+      <div class="wk-row"><span>평균 대기</span><span class="wk-val td-warn">118벌</span></div>
+      <div class="wk-row"><span>계획</span><span class="wk-val">60~70벌</span></div>
+      <div class="wk-row"><span>설비정비</span><span class="wk-val">71건</span></div>
+      <div class="wk-row"><span>SET-UP</span><span class="wk-val">125건</span></div>
+    </div>
+    <div class="week-card current">
+      <div class="wk-num" style="color:var(--blue2)">4주차 (진행중)</div>
+      <div class="wk-date">5/22 ~ 5/27 (3일)</div>
+      <div class="wk-row"><span>평균 대기</span><span class="wk-val td-good">118벌</span></div>
+      <div class="wk-row"><span>계획</span><span class="wk-val">50~60벌</span></div>
+      <div class="wk-row"><span>설비정비</span><span class="wk-val">–</span></div>
+      <div class="wk-row"><span>SET-UP</span><span class="wk-val">–</span></div>
+    </div>
+  </div>
+
+  <!-- 일별 상세 테이블 -->
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>5월 일별 금형 대기 상세</h2>
+  </div>
+  <div class="table-card">
+    <div class="table-head">📅 금형 대기 일별 실적 (벌)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>주차</th>
+            <th>계획</th>
+            <th>실적</th>
+            <th>달성여부</th>
+            <th>사후수리</th>
+            <th>예방정비</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>5/04 (일)</td><td>1주</td><td>90</td><td class="td-warn">131</td><td><span class="status-dot sd-yellow"></span>미달</td><td>2</td><td>9</td></tr>
+          <tr><td>5/06 (화)</td><td>1주</td><td>80</td><td class="td-warn">124</td><td><span class="status-dot sd-yellow"></span>미달</td><td>7</td><td>0</td></tr>
+          <tr><td>5/07 (수)</td><td>1주</td><td>80</td><td class="td-warn">126</td><td><span class="status-dot sd-yellow"></span>미달</td><td>1</td><td>6</td></tr>
+          <tr class="row-total"><td>1주차 평균</td><td>–</td><td>83</td><td class="td-warn">127</td><td>–</td><td>3.3</td><td>5.0</td></tr>
+          <tr><td>5/08 (목)</td><td>2주</td><td>80</td><td class="td-warn">130</td><td><span class="status-dot sd-yellow"></span>미달</td><td>3</td><td>0</td></tr>
+          <tr><td>5/11 (일)</td><td>2주</td><td>80</td><td class="td-warn">131</td><td><span class="status-dot sd-yellow"></span>미달</td><td>8</td><td>0</td></tr>
+          <tr><td>5/12 (월)</td><td>2주</td><td>80</td><td class="td-alert">140</td><td><span class="status-dot sd-red"></span>미달</td><td>5</td><td>22</td></tr>
+          <tr><td>5/13 (화)</td><td>2주</td><td>70</td><td class="td-warn">136</td><td><span class="status-dot sd-yellow"></span>미달</td><td>5</td><td>0</td></tr>
+          <tr><td>5/14 (수)</td><td>2주</td><td>70</td><td class="td-warn">130</td><td><span class="status-dot sd-yellow"></span>미달</td><td>3</td><td>1</td></tr>
+          <tr class="row-total"><td>2주차 평균</td><td>–</td><td>76</td><td class="td-warn">133</td><td>–</td><td>4.8</td><td>4.6</td></tr>
+          <tr><td>5/15 (목)</td><td>3주</td><td>70</td><td class="td-warn">118</td><td><span class="status-dot sd-yellow"></span>미달</td><td>8</td><td>0</td></tr>
+          <tr><td>5/18 (일)</td><td>3주</td><td>70</td><td class="td-warn">127</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+          <tr><td>5/19 (월)</td><td>3주</td><td>70</td><td class="td-warn">125</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+          <tr><td>5/20 (화)</td><td>3주</td><td>70</td><td class="td-warn">113</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+          <tr><td>5/21 (수)</td><td>3주</td><td>60</td><td class="td-warn">108</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+          <tr class="row-total"><td>3주차 평균</td><td>–</td><td>68</td><td class="td-warn">118</td><td>–</td><td>–</td><td>–</td></tr>
+          <tr><td>5/22 (목)</td><td>4주</td><td>60</td><td class="td-warn">114</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+          <tr><td>5/26 (월)</td><td>4주</td><td>60</td><td class="td-warn">–</td><td>–</td><td>–</td><td>–</td></tr>
+          <tr><td>5/27 (화)</td><td>4주</td><td>50</td><td class="td-warn">121</td><td><span class="status-dot sd-yellow"></span>미달</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 주간 차트 -->
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>5월 일별 금형 대기 추이</h2>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">🔩 금형 대기 일별 추이 (벌) <span class="ctag">계획 vs 실적</span></div>
+    <div class="chart-wrap" style="height:clamp(180px,35vw,260px)"><canvas id="chartDailyWait"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB 3 : 금형현황
+══════════════════════════════ -->
+<div class="tab-panel" id="tab-mold">
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>금형 운용 현황</h2>
+    <span class="sub">최근 기준 (5/27)</span>
+  </div>
+
+  <div class="mold-status-grid">
+    <div class="mold-box">
+      <div class="mb-icon">🏭</div>
+      <div class="mb-num">1,068</div>
+      <div class="mb-unit">벌</div>
+      <div class="mb-label">총 금형 수</div>
+    </div>
+    <div class="mold-box" style="border-top:3px solid var(--green)">
+      <div class="mb-icon">▶️</div>
+      <div class="mb-num" style="color:var(--green)">109</div>
+      <div class="mb-unit">벌</div>
+      <div class="mb-label">양산 중</div>
+    </div>
+    <div class="mold-box" style="border-top:3px solid var(--text3)">
+      <div class="mb-icon">⏸️</div>
+      <div class="mb-num">959</div>
+      <div class="mb-unit">벌</div>
+      <div class="mb-label">생산 대기</div>
+    </div>
+    <div class="mold-box" style="border-top:3px solid var(--yellow)">
+      <div class="mb-icon">🔧</div>
+      <div class="mb-num" style="color:var(--yellow)">127</div>
+      <div class="mb-unit">벌</div>
+      <div class="mb-label">정비 대기</div>
+    </div>
+  </div>
+
+  <!-- 양산 현황 -->
+  <div class="section-header"><div class="dot"></div><h2>라인별 양산 현황</h2></div>
+  <div class="table-card" style="margin-bottom:16px">
+    <div class="table-head">🏭 양산 현황 (일평균)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>라인</th>
+            <th>2024년</th>
+            <th>2025년</th>
+            <th>26'1월</th>
+            <th>2월</th>
+            <th>3월</th>
+            <th>4월</th>
+            <th>5월</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1층 양산</td><td>24.1</td><td>5.0</td><td>17.8</td><td>20.4</td><td>21.1</td><td>19.3</td><td class="td-blue">17.1</td></tr>
+          <tr><td>2층 양산</td><td>52.9</td><td>55.0</td><td>57.9</td><td>58.1</td><td>59.8</td><td>63.0</td><td class="td-blue">62.2</td></tr>
+          <tr><td>B동 양산</td><td>22.1</td><td>20.0</td><td>18.5</td><td>20.6</td><td>21.3</td><td>22.8</td><td class="td-blue">24.3</td></tr>
+          <tr class="row-total"><td>양산 합계</td><td>66.0</td><td>80.0</td><td>94.2</td><td>99.1</td><td>102.2</td><td>105.0</td><td class="td-good">103.6</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 소형/대형 정비 현황 -->
+  <div class="section-header"><div class="dot"></div><h2>소형 / 대형 금형 정비 현황</h2></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">📦 소형 금형 정비 현황 <span class="ctag">5월 현재</span></div>
+      <div class="chart-wrap"><canvas id="chartSmallMold"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏗️ 대형 금형 정비 현황 <span class="ctag">5월 현재</span></div>
+      <div class="chart-wrap"><canvas id="chartLargeMold"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">📋 소형/대형 정비 상세 현황</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>2024년</th>
+            <th>2025년</th>
+            <th>26'1월</th>
+            <th>2월</th>
+            <th>3월</th>
+            <th>4월</th>
+            <th>5월</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>소형 PM중</td><td>3</td><td>5</td><td>1</td><td>6</td><td>5</td><td>9</td><td class="td-blue">4</td></tr>
+          <tr><td>소형 수리중</td><td>12</td><td>2</td><td>7</td><td>6</td><td>3</td><td>6</td><td class="td-blue">6</td></tr>
+          <tr><td>소형 PM대기</td><td>100</td><td>124</td><td>91</td><td>63</td><td>71</td><td>53</td><td class="td-warn">50</td></tr>
+          <tr><td>소형 수리대기</td><td>50</td><td>45</td><td>54</td><td>57</td><td>67</td><td>61</td><td class="td-warn">57</td></tr>
+          <tr class="row-total"><td>소형 합계</td><td>165</td><td>176</td><td>153</td><td>132</td><td>146</td><td>129</td><td class="td-warn">117</td></tr>
+          <tr><td>대형 PM중</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="td-good">0</td></tr>
+          <tr><td>대형 수리중</td><td>2</td><td>1</td><td>0</td><td>2</td><td>2</td><td>0</td><td class="td-good">1</td></tr>
+          <tr><td>대형 PM대기</td><td>4</td><td>1</td><td>1</td><td>1</td><td>5</td><td>5</td><td class="td-good">6</td></tr>
+          <tr><td>대형 수리대기</td><td>3</td><td>2</td><td>2</td><td>0</td><td>6</td><td>1</td><td class="td-good">3</td></tr>
+          <tr class="row-total"><td>대형 합계</td><td>9</td><td>5</td><td>3</td><td>3</td><td>13</td><td>6</td><td class="td-good">10</td></tr>
+          <tr class="row-total" style="background:#e8f2ff"><td>정비대기 합계</td><td>174</td><td>181</td><td>156</td><td>135</td><td>159</td><td>135</td><td class="td-blue">127</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB 4 : 준수율
+══════════════════════════════ -->
+<div class="tab-panel" id="tab-compliance">
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>SET-UP 준수율 현황</h2>
+    <span class="sub">김천사업장 금형 셋업준비 및 정비</span>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card warn">
+      <div class="kpi-label">SET-UP 준수율 (5월)</div>
+      <div class="kpi-value">96.4<span>%</span></div>
+      <div class="kpi-sub">목표 ≥97%<span class="kpi-badge badge-warn">▽0.6%p</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-warn" style="width:96.4%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">일 평균 SET-UP 수</div>
+      <div class="kpi-value">25.9<span>건</span></div>
+      <div class="kpi-sub">선행 완료 13.6 / 당일 12.3<span class="kpi-badge badge-good">정상</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:75%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">미처리 (일 평균)</div>
+      <div class="kpi-value">0.8<span>건</span></div>
+      <div class="kpi-sub">전월 0.6건 대비<span class="kpi-badge badge-warn">▲0.2 증가</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-warn" style="width:30%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">금형정비 입고 (일)</div>
+      <div class="kpi-value">22.0<span>건</span></div>
+      <div class="kpi-sub">전월 22.0건 동일<span class="kpi-badge badge-good">유지</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:65%"></div></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">✅ SET-UP 준수율 월별 추이 <span class="ctag">목표 ≥97%</span></div>
+    <div class="chart-wrap" style="height:clamp(180px,35vw,240px)"><canvas id="chartComplianceTrend"></canvas></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">📋 SET-UP 셋업 및 정비 상세</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>항목</th>
+            <th>2024년</th>
+            <th>2025년</th>
+            <th>26'1월</th>
+            <th>2월</th>
+            <th>3월</th>
+            <th>4월</th>
+            <th>5월</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td rowspan="3">셋업 현황</td><td>SET_UP 수</td><td>19.2</td><td>23.8</td><td>21.5</td><td>23.6</td><td>24.6</td><td>24.8</td><td class="td-blue">25.9</td></tr>
+          <tr><td>선행 완료</td><td>11.2</td><td>12.0</td><td>10.6</td><td>13.3</td><td>12.8</td><td>13.2</td><td class="td-blue">13.6</td></tr>
+          <tr><td>당일 준비</td><td>8.3</td><td>11.8</td><td>15.3</td><td>10.4</td><td>11.9</td><td>11.5</td><td class="td-blue">12.3</td></tr>
+          <tr><td rowspan="4">정비 현황</td><td>PM</td><td>9.2</td><td>10.6</td><td>12.5</td><td>13.6</td><td>11.3</td><td>12.1</td><td class="td-blue">11.7</td></tr>
+          <tr><td>C/V,월마크</td><td>2.2</td><td>3.1</td><td>2.8</td><td>2.9</td><td>3.0</td><td>3.3</td><td class="td-blue">3.1</td></tr>
+          <tr><td>일반정비</td><td>5.9</td><td>3.8</td><td>3.7</td><td>4.4</td><td>4.7</td><td>4.9</td><td class="td-blue">5.1</td></tr>
+          <tr><td>C/B 정비</td><td>1.2</td><td>2.4</td><td>2.3</td><td>2.1</td><td>2.2</td><td>2.5</td><td class="td-blue">2.2</td></tr>
+          <tr><td>–</td><td>정비 완료</td><td>18.5</td><td>19.9</td><td>20.0</td><td>23.1</td><td>21.2</td><td>22.9</td><td class="td-good">22.1</td></tr>
+          <tr><td>–</td><td>미처리 수</td><td>0.6</td><td>0.6</td><td>0.9</td><td>1.2</td><td>0.9</td><td>0.6</td><td class="td-warn">0.8</td></tr>
+          <tr class="row-total"><td>–</td><td>SET-UP 준수율</td><td>96.8%</td><td>96.8%</td><td>95.6%</td><td>94.6%</td><td>95.9%</td><td>97.2%</td><td class="td-warn">96.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB 5 : 비용현황
+══════════════════════════════ -->
+<div class="tab-panel" id="tab-cost">
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>비용 현황</h2>
+    <span class="sub">2026년 5월 (단위: 만원)</span>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card warn">
+      <div class="kpi-label">금형 매입비</div>
+      <div class="kpi-value">946<span>만원</span></div>
+      <div class="kpi-sub">목표 1,900만원<span class="kpi-badge badge-good">49.8%</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:50%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">설비 수선비</div>
+      <div class="kpi-value">1,400<span>만원</span></div>
+      <div class="kpi-sub">목표 2,900만원<span class="kpi-badge badge-good">48.3%</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-good" style="width:48%"></div></div>
+    </div>
+    <div class="kpi-card alert">
+      <div class="kpi-label">설비 구매비용</div>
+      <div class="kpi-value">13,030<span>만원</span></div>
+      <div class="kpi-sub">목표 3,000만원<span class="kpi-badge badge-alert">434%</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-alert" style="width:100%"></div></div>
+    </div>
+    <div class="kpi-card good">
+      <div class="kpi-label">5월 총 비용</div>
+      <div class="kpi-value">15,376<span>만원</span></div>
+      <div class="kpi-sub">전월 6,754만원 대비<span class="kpi-badge badge-alert">+8,622</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar pb-alert" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">💴 금형 매입비 세부 (5월 누적) <span class="ctag">만원</span></div>
+      <div class="chart-wrap"><canvas id="chartMoldCostBreak"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🔧 설비 수선비 세부 (5월 누적) <span class="ctag">만원</span></div>
+      <div class="chart-wrap"><canvas id="chartEquipCostBreak"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>비용 월별 추이</h2>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">💰 월별 비용 추이 비교 <span class="ctag">2026년 1~5월 / 만원</span></div>
+    <div class="chart-wrap" style="height:clamp(200px,35vw,260px)"><canvas id="chartCostTrend"></canvas></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">📋 비용 상세 현황 (단위: 만원)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>항목</th>
+            <th>목표</th>
+            <th>1월</th>
+            <th>2월</th>
+            <th>3월</th>
+            <th>4월</th>
+            <th>5월</th>
+            <th>평가</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td rowspan="4">금형 매입</td><td>설변·치수수정</td><td>–</td><td>160</td><td>469</td><td>99</td><td>598</td><td class="td-blue">297</td><td>–</td></tr>
+          <tr><td>금형 사고</td><td>–</td><td>86</td><td>174</td><td>18</td><td>0</td><td class="td-warn">288</td><td>–</td></tr>
+          <tr><td>일반 수리</td><td>–</td><td>1,753</td><td>946</td><td>1,132</td><td>1,623</td><td class="td-good">268</td><td>–</td></tr>
+          <tr><td>소모품비</td><td>–</td><td>136</td><td>349</td><td>142</td><td>203</td><td class="td-good">75</td><td>–</td></tr>
+          <tr class="row-total"><td>–</td><td>금형매입 합계</td><td>1,900</td><td>2,135</td><td>1,937</td><td>1,391</td><td>2,423</td><td class="td-good">946</td><td><span class="status-dot sd-green"></span>목표이내</td></tr>
+          <tr><td rowspan="4">설비 수선</td><td>소모품비</td><td>–</td><td>733</td><td>150</td><td>770</td><td>1,443</td><td class="td-blue">405</td><td>–</td></tr>
+          <tr><td>사후수리</td><td>–</td><td>1,321</td><td>1,687</td><td>1,114</td><td>1,139</td><td class="td-good">995</td><td>–</td></tr>
+          <tr><td>개선비</td><td>–</td><td>0</td><td>0</td><td>721</td><td>0</td><td class="td-good">0</td><td>–</td></tr>
+          <tr><td>사고성</td><td>–</td><td>0</td><td>460</td><td>0</td><td>0</td><td class="td-good">0</td><td>–</td></tr>
+          <tr class="row-total"><td>–</td><td>설비수선 합계</td><td>2,900</td><td>2,054</td><td>2,297</td><td>2,605</td><td>2,582</td><td class="td-good">1,400</td><td><span class="status-dot sd-green"></span>목표이내</td></tr>
+          <tr class="row-total" style="background:#fef0f0"><td>–</td><td>설비 구매비용</td><td>3,000</td><td>450</td><td>700</td><td>540</td><td>1,750</td><td class="td-alert">13,030</td><td><span class="status-dot sd-red"></span>목표초과</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB 6 : 데이터 업로드
+══════════════════════════════ -->
+<div class="tab-panel" id="tab-upload">
+
+  <div class="section-header">
+    <div class="dot"></div>
+    <h2>데이터 업로드</h2>
+    <span class="sub">엑셀 파일 업로드로 자동 갱신 (개발 예정)</span>
+  </div>
+
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="uz-icon">📂</div>
+    <h3>엑셀 파일을 드래그하거나 클릭하여 업로드</h3>
+    <p>금형파트.xlsx 형식 지원 · 데이터 자동 파싱</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+
+  <div class="table-card" style="margin-top:16px">
+    <div class="table-head">📋 업로드 지원 시트 목록</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>시트명</th><th>내용</th><th>반영 탭</th><th>상태</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>생산기술</td><td>KPI 관리 (금형대기, 설비정비, 비용)</td><td>대시보드, 주간현황, 비용</td><td><span class="status-dot sd-green"></span>지원</td></tr>
+          <tr><td>금형현황</td><td>총 금형 수, 양산/정비 현황</td><td>금형현황</td><td><span class="status-dot sd-green"></span>지원</td></tr>
+          <tr><td>금형준수율</td><td>SET-UP 준수율, 정비 현황</td><td>준수율</td><td><span class="status-dot sd-green"></span>지원</td></tr>
+          <tr><td>Sheet1</td><td>예비 시트</td><td>–</td><td><span class="status-dot sd-gray"></span>미사용</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border-radius:var(--radius);padding:16px;margin-top:12px;box-shadow:var(--shadow)">
+    <div style="font-size:var(--fs-sm);font-weight:700;color:var(--navy);margin-bottom:8px">📌 사용 안내</div>
+    <div style="font-size:var(--fs-xs);color:var(--text2);line-height:1.8">
+      1. 기존 엑셀 파일(금형파트.xlsx)을 그대로 업로드하면 자동으로 최신 데이터로 갱신됩니다.<br>
+      2. PC와 핸드폰 모두 동일한 파일 업로드 방식으로 데이터를 갱신할 수 있습니다.<br>
+      3. 업로드된 데이터는 세션에만 저장되며, 새로고침 시 초기값으로 복원됩니다.<br>
+      4. 홈 화면에 추가 후 앱처럼 사용 가능합니다 (PWA 지원).
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+/* ══ PWA 서비스 워커 등록 ══ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('[PWA] ✅ SW 등록 성공:', reg.scope);
+        // 새 버전 감지 시 업데이트 배너 표시
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[PWA] SW 등록 실패 (로컬파일 환경):', err));
+  });
+}
+
+/* 업데이트 배너 */
+function showUpdateBanner() {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#163461;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  banner.innerHTML = '🔄 새 버전이 있습니다. <button onclick="location.reload()" style="background:#2589e8;border:none;color:#fff;padding:4px 12px;border-radius:12px;cursor:pointer;font-weight:700">새로고침</button>';
+  document.body.appendChild(banner);
+}
+
+/* ══ 탭 전환 ══ */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ══ 날짜 ══ */
+(function(){
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+  document.getElementById('headerDate').textContent = `📋 보고일: ${y}.${String(m).padStart(2,'0')}.${String(day).padStart(2,'0')}`;
+  const w = Math.ceil(day/7);
+  document.getElementById('weekBadge').textContent = `📅 ${y}년 ${m}월 ${w}주차`;
+})();
+
+/* ══ Chart.js 공통 설정 ══ */
+Chart.defaults.font.family = "'Malgun Gothic','맑은 고딕',sans-serif";
+Chart.defaults.font.size   = Math.min(window.innerWidth/60, 12);
+Chart.defaults.color = '#4a5568';
+
+const months = ["1월","2월","3월","4월","5월"];
+const navy = '#0d2240', blue = '#1a6fc4', blue2 = '#2589e8';
+const green = '#1aaa5e', red = '#e03e3e', yellow = '#f0b429', accent = '#f4800a';
+
+function mkChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  return new Chart(el.getContext('2d'), cfg);
+}
+
+/* 1. 금형 대기 추이 */
+mkChart('chartMoldWait',{
+  type:'line',
+  data:{
+    labels: months,
+    datasets:[
+      {label:'실적',data:[156,132,159,135,121],borderColor:blue2,backgroundColor:'rgba(37,137,232,.12)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:blue2,borderWidth:2.5},
+      {label:'목표',data:[150,120,100,50,50],borderColor:red,borderDash:[5,4],fill:false,tension:.3,pointRadius:3,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{beginAtZero:false,grid:{color:'#eef2f8'}}}}
+});
+
+/* 2. 설비정비 건수 */
+mkChart('chartMaint',{
+  type:'bar',
+  data:{
+    labels: months,
+    datasets:[
+      {label:'실적',data:[793,858,725,679,618],backgroundColor:[blue2,blue2,blue2,blue2,'rgba(26,170,94,.85)'],borderRadius:5,borderSkipped:false},
+      {label:'목표',data:[757,757,757,757,757],type:'line',borderColor:red,borderDash:[5,4],fill:false,pointRadius:0,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{beginAtZero:false,grid:{color:'#eef2f8'}}}}
+});
+
+/* 3. 금형매입비 */
+mkChart('chartMoldCost',{
+  type:'bar',
+  data:{
+    labels: months,
+    datasets:[
+      {label:'실적(만원)',data:[2135,1937,1391,2423,946],backgroundColor:[blue,blue,blue,blue,green],borderRadius:5,borderSkipped:false},
+      {label:'목표',data:[2000,2000,2000,1900,1900],type:'line',borderColor:red,borderDash:[5,4],fill:false,pointRadius:0,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{beginAtZero:false,grid:{color:'#eef2f8'}}}}
+});
+
+/* 4. SET-UP 준수율 */
+mkChart('chartCompliance',{
+  type:'line',
+  data:{
+    labels:['24년','25년','1월','2월','3월','4월','5월'],
+    datasets:[
+      {label:'준수율(%)',data:[96.8,96.8,95.6,94.6,95.9,97.2,96.4],
+        borderColor:blue2,backgroundColor:'rgba(37,137,232,.1)',fill:true,tension:.4,pointRadius:5,borderWidth:2.5},
+      {label:'목표 97%',data:[97,97,97,97,97,97,97],borderColor:red,borderDash:[5,4],fill:false,pointRadius:0,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{min:93,max:99,grid:{color:'#eef2f8'}}}}
+});
+
+/* 5. 일별 금형대기 */
+mkChart('chartDailyWait',{
+  type:'line',
+  data:{
+    labels:['5/4','5/6','5/7','5/8','5/11','5/12','5/13','5/14','5/15','5/18','5/19','5/20','5/21','5/22','5/27'],
+    datasets:[
+      {label:'실적(벌)',data:[131,124,126,130,131,140,136,130,118,127,125,113,108,114,121],
+        borderColor:blue2,backgroundColor:'rgba(37,137,232,.1)',fill:true,tension:.3,pointRadius:4,borderWidth:2.5},
+      {label:'계획(벌)',data:[90,80,80,80,80,80,70,70,70,70,70,70,60,60,50],
+        borderColor:red,borderDash:[5,4],fill:false,tension:.3,pointRadius:3,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{beginAtZero:false,min:40,grid:{color:'#eef2f8'}}}}
+});
+
+/* 6. 소형 금형 도넛 */
+mkChart('chartSmallMold',{
+  type:'doughnut',
+  data:{
+    labels:['PM중','수리중','PM대기','수리대기'],
+    datasets:[{data:[4,6,50,57],backgroundColor:[green,blue,yellow,red],hoverOffset:6,borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}}}}
+});
+
+/* 7. 대형 금형 도넛 */
+mkChart('chartLargeMold',{
+  type:'doughnut',
+  data:{
+    labels:['PM중','수리중','PM대기','수리대기'],
+    datasets:[{data:[0,1,6,3],backgroundColor:[green,blue,yellow,red],hoverOffset:6,borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}}}}
+});
+
+/* 8. 준수율 추이 (탭4) */
+mkChart('chartComplianceTrend',{
+  type:'line',
+  data:{
+    labels:['24년','25년','1월','2월','3월','4월','5월'],
+    datasets:[
+      {label:'준수율',data:[96.8,96.8,95.6,94.6,95.9,97.2,96.4],
+        borderColor:blue2,backgroundColor:'rgba(37,137,232,.12)',fill:true,tension:.4,pointRadius:5,pointHoverRadius:7,borderWidth:2.5},
+      {label:'목표',data:[97,97,97,97,97,97,97],borderColor:red,borderDash:[5,4],fill:false,pointRadius:0,borderWidth:1.8}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{y:{min:93,max:99,grid:{color:'#eef2f8'}}}}
+});
+
+/* 9. 금형매입비 세부 도넛 */
+mkChart('chartMoldCostBreak',{
+  type:'doughnut',
+  data:{
+    labels:['설변·치수수정','금형사고','일반수리','소모품비'],
+    datasets:[{data:[297,288,268,75],backgroundColor:[blue,red,green,yellow],hoverOffset:6,borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}}}}
+});
+
+/* 10. 설비수선비 세부 */
+mkChart('chartEquipCostBreak',{
+  type:'doughnut',
+  data:{
+    labels:['소모품비','사후수리','개선비','사고성'],
+    datasets:[{data:[405,995,0,0],backgroundColor:[blue,red,green,yellow],hoverOffset:6,borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}}}}
+});
+
+/* 11. 월별 비용 추이 */
+mkChart('chartCostTrend',{
+  type:'bar',
+  data:{
+    labels: months,
+    datasets:[
+      {label:'금형매입',data:[2135,1937,1391,2423,946],backgroundColor:blue,borderRadius:4,borderSkipped:false},
+      {label:'설비수선',data:[2054,2297,2605,2582,1400],backgroundColor:blue2,borderRadius:4,borderSkipped:false},
+      {label:'설비구매',data:[450,700,540,1750,13030],backgroundColor:accent,borderRadius:4,borderSkipped:false}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}},
+    scales:{x:{stacked:false},y:{beginAtZero:true,grid:{color:'#eef2f8'}}}}
+});
+
+/* ══ 파일 업로드 핸들러 ══ */
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const zone = document.getElementById('uploadZone');
+  zone.innerHTML = `<div class="uz-icon">✅</div><h3>${file.name} 업로드 완료</h3><p>데이터 파싱 기능은 다음 버전에서 지원됩니다.</p>`;
+  zone.style.borderColor = 'var(--green)';
+  zone.style.background = '#f0fdf4';
+}
+
+/* 드래그앤드롭 */
+const zone = document.getElementById('uploadZone');
+if(zone){
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault(); zone.classList.remove('drag');
+    if(e.dataTransfer.files[0]) handleFileUpload({target:{files:e.dataTransfer.files}});
+  });
+}
+
+/* ══ PWA 설치 프롬프트 ══ */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.add('visible');
+});
+function installPWA() {
+  if (!deferredPrompt) {
+    alert('💡 설치 방법:\n\n📱 모바일: 브라우저 메뉴 → "홈 화면에 추가"\n🖥️ PC(Chrome): 주소창 오른쪽 설치 아이콘 클릭');
+    return;
+  }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    if (result.outcome === 'accepted') {
+      console.log('[PWA] ✅ 설치 완료');
+      document.getElementById('installBtn').classList.remove('visible');
+    }
+    deferredPrompt = null;
+  });
+}
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('visible');
+  console.log('[PWA] 📲 앱 설치 완료');
+});
+</script>
+</body>
+</html>
