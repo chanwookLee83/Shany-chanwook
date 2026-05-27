@@ -21,6 +21,8 @@
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 
+<!-- SheetJS (Excel 파싱) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Chart.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -709,7 +711,7 @@
   <div class="kpi-grid">
     <div class="kpi-card good">
       <div class="kpi-label">금형 대기</div>
-      <div class="kpi-value">121<span>벌</span></div>
+      <div class="kpi-value"><span id="kv-mold-wait">121</span><span>벌</span></div>
       <div class="kpi-sub">
         목표 ≤50벌
         <span class="kpi-badge badge-warn">목표초과</span>
@@ -718,7 +720,7 @@
     </div>
     <div class="kpi-card good">
       <div class="kpi-label">설비정비 건수</div>
-      <div class="kpi-value">618<span>건</span></div>
+      <div class="kpi-value"><span id="kv-maint-cnt">618</span><span>건</span></div>
       <div class="kpi-sub">
         목표 757건
         <span class="kpi-badge badge-good">81.6%</span>
@@ -727,7 +729,7 @@
     </div>
     <div class="kpi-card warn">
       <div class="kpi-label">금형 매입비</div>
-      <div class="kpi-value">946<span>만원</span></div>
+      <div class="kpi-value"><span id="kv-mold-cost">946</span><span>만원</span></div>
       <div class="kpi-sub">
         목표 ≤1,900만원
         <span class="kpi-badge badge-good">49.8%</span>
@@ -736,7 +738,7 @@
     </div>
     <div class="kpi-card info">
       <div class="kpi-label">설비수선비</div>
-      <div class="kpi-value">1,400<span>만원</span></div>
+      <div class="kpi-value"><span id="kv-equip-cost">1,400</span><span>만원</span></div>
       <div class="kpi-sub">
         목표 ≤2,900만원
         <span class="kpi-badge badge-good">48.3%</span>
@@ -745,7 +747,7 @@
     </div>
     <div class="kpi-card alert">
       <div class="kpi-label">설비 구매비용</div>
-      <div class="kpi-value">13,030<span>만원</span></div>
+      <div class="kpi-value"><span id="kv-equip-buy">13,030</span><span>만원</span></div>
       <div class="kpi-sub">
         목표 ≤3,000만원
         <span class="kpi-badge badge-alert">초과</span>
@@ -754,7 +756,7 @@
     </div>
     <div class="kpi-card good">
       <div class="kpi-label">SET-UP 준수율</div>
-      <div class="kpi-value">96.4<span>%</span></div>
+      <div class="kpi-value"><span id="kv-setup-rate">96.4</span><span>%</span></div>
       <div class="kpi-sub">
         목표 ≥97%
         <span class="kpi-badge badge-warn">▽0.6%p</span>
@@ -763,7 +765,7 @@
     </div>
     <div class="kpi-card good">
       <div class="kpi-label">총 금형 벌수</div>
-      <div class="kpi-value">1,068<span>벌</span></div>
+      <div class="kpi-value"><span id="kv-total-mold">1,068</span><span>벌</span></div>
       <div class="kpi-sub">
         양산중 109 / 대기 959
         <span class="kpi-badge badge-blue" style="background:#e8f2ff;color:var(--blue)">운영중</span>
@@ -772,7 +774,7 @@
     </div>
     <div class="kpi-card good">
       <div class="kpi-label">정비 대기</div>
-      <div class="kpi-value">127<span>벌</span></div>
+      <div class="kpi-value"><span id="kv-maint-wait">127</span><span>벌</span></div>
       <div class="kpi-sub">
         소형 117 / 대형 10
         <span class="kpi-badge badge-warn">관리중</span>
@@ -1273,7 +1275,7 @@
   <div class="section-header">
     <div class="dot"></div>
     <h2>데이터 업로드</h2>
-    <span class="sub">엑셀 파일 업로드로 자동 갱신 (개발 예정)</span>
+    <span class="sub">엑셀 파일 업로드로 자동 갱신</span>
   </div>
 
   <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
@@ -1451,6 +1453,29 @@ function resetData() {
   patchChart('chartMoldCost',        ORIGIN.moldCost.labels,   ORIGIN.moldCost.result,   ORIGIN.moldCost.goal);
   patchChart('chartCompliance',      ORIGIN.compliance.labels, ORIGIN.compliance.result, ORIGIN.compliance.goal);
   patchChart('chartComplianceTrend', ORIGIN.compliance.labels, ORIGIN.compliance.result, ORIGIN.compliance.goal);
+  const ctCh = charts['chartCostTrend'];
+  if (ctCh) {
+    ctCh.data.datasets[0].data = [2135,1937,1391,2423,946];
+    ctCh.data.datasets[1].data = [2054,2297,2605,2582,1400];
+    ctCh.data.datasets[2].data = [450,700,540,1750,13030];
+    ctCh.update();
+  }
+
+  /* 2-b. KPI 카드 값 원복 */
+  setKpiValue('kv-mold-wait',  121);
+  setKpiValue('kv-maint-cnt',  618);
+  setKpiValue('kv-mold-cost',  946);
+  setKpiValue('kv-equip-cost', 1400);
+  setKpiValue('kv-equip-buy',  13030);
+  setKpiValue('kv-setup-rate', 96.4);
+  setKpiValue('kv-total-mold', 1068);
+  setKpiValue('kv-maint-wait', 127);
+
+  /* 2-c. FILTER_DATA 월별 데이터 원복 */
+  FILTER_DATA.month.moldWait.result   = [156,132,159,135,121];
+  FILTER_DATA.month.maint.result      = [793,858,725,679,618];
+  FILTER_DATA.month.moldCost.result   = [2135,1937,1391,2423,946];
+  FILTER_DATA.month.compliance.result = [95.6,94.6,95.9,97.2,96.4];
 
   /* 3. 업로드 영역 초기화 */
   const zone = document.getElementById('uploadZone');
@@ -1633,20 +1658,185 @@ mkChart('chartCostTrend',{
     scales:{x:{stacked:false},y:{beginAtZero:true,grid:{color:'#eef2f8'}}}}
 });
 
-/* ══ 파일 업로드 핸들러 ══ */
-function handleFileUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const zone = document.getElementById('uploadZone');
-  zone.innerHTML = `<div class="uz-icon">✅</div><h3>${file.name} 업로드 완료</h3><p>데이터 파싱 기능은 다음 버전에서 지원됩니다.</p>`;
-  zone.style.borderColor = 'var(--green)';
-  zone.style.background  = '#f0fdf4';
+/* ══ KPI 값 업데이트 헬퍼 ══ */
+function setKpiValue(id, val) {
+  const el = document.getElementById(id);
+  if (!el || val === null || val === undefined) return;
+  const n = Number(val);
+  el.textContent = Number.isInteger(n) ? n.toLocaleString('ko-KR') : n.toFixed(1);
+}
 
+/* ══ 파싱 데이터 → 차트 / KPI 반영 ══ */
+function applyParsedData(parsed, fileName) {
+  const hasData = Object.keys(parsed).length > 0;
+
+  if (parsed.moldWait) {
+    patchChart('chartMoldWait', months, parsed.moldWait, ORIGIN.moldWait.goal);
+    FILTER_DATA.month.moldWait.result = parsed.moldWait;
+    const last = [...parsed.moldWait].reverse().find(v => v !== null);
+    setKpiValue('kv-mold-wait', last);
+  }
+  if (parsed.maintCnt) {
+    patchChart('chartMaint', months, parsed.maintCnt, ORIGIN.maint.goal);
+    FILTER_DATA.month.maint.result = parsed.maintCnt;
+    const last = [...parsed.maintCnt].reverse().find(v => v !== null);
+    setKpiValue('kv-maint-cnt', last);
+  }
+  if (parsed.moldCost) {
+    patchChart('chartMoldCost', months, parsed.moldCost, ORIGIN.moldCost.goal);
+    FILTER_DATA.month.moldCost.result = parsed.moldCost;
+    const last = [...parsed.moldCost].reverse().find(v => v !== null);
+    setKpiValue('kv-mold-cost', last);
+    const ch = charts['chartCostTrend'];
+    if (ch) { ch.data.datasets[0].data = parsed.moldCost; ch.update(); }
+  }
+  if (parsed.equipCost) {
+    const last = [...parsed.equipCost].reverse().find(v => v !== null);
+    setKpiValue('kv-equip-cost', last);
+    const ch = charts['chartCostTrend'];
+    if (ch) { ch.data.datasets[1].data = parsed.equipCost; ch.update(); }
+  }
+  if (parsed.equipBuy) {
+    const last = [...parsed.equipBuy].reverse().find(v => v !== null);
+    setKpiValue('kv-equip-buy', last);
+    const ch = charts['chartCostTrend'];
+    if (ch) { ch.data.datasets[2].data = parsed.equipBuy; ch.update(); }
+  }
+  if (parsed.compliance) {
+    const labels7  = ['24년','25년','1월','2월','3월','4월','5월'];
+    const fullData = [96.8, 96.8, ...parsed.compliance];
+    patchChart('chartCompliance',      labels7, fullData, ORIGIN.compliance.goal);
+    patchChart('chartComplianceTrend', labels7, fullData, ORIGIN.compliance.goal);
+    FILTER_DATA.month.compliance.result = parsed.compliance;
+    const last = [...parsed.compliance].reverse().find(v => v !== null);
+    setKpiValue('kv-setup-rate', last);
+  }
+  if (parsed.totalMold) {
+    const last = [...parsed.totalMold].reverse().find(v => v !== null);
+    setKpiValue('kv-total-mold', last);
+  }
+  if (parsed.maintWait) {
+    const last = [...parsed.maintWait].reverse().find(v => v !== null);
+    setKpiValue('kv-maint-wait', last);
+  }
+
+  const zone = document.getElementById('uploadZone');
+  if (zone) {
+    const msg = hasData
+      ? '데이터가 대시보드에 반영되었습니다.'
+      : '인식된 데이터가 없습니다. 시트명/열 구조를 확인해 주세요.';
+    zone.innerHTML = `<div class="uz-icon">${hasData ? '✅' : '⚠️'}</div><h3>${fileName}</h3><p>${msg}</p>`;
+    zone.style.borderColor = hasData ? 'var(--green)'  : 'var(--yellow)';
+    zone.style.background  = hasData ? '#f0fdf4' : '#fffbea';
+  }
   const ds  = document.getElementById('dataStatus');
   const dst = document.getElementById('dataStatusText');
   if (ds)  ds.classList.add('uploaded');
-  if (dst) dst.textContent = file.name.length > 16 ? file.name.slice(0,14)+'…' : file.name;
-  showToast(`${file.name} 로드 완료`);
+  if (dst) dst.textContent = fileName.length > 16 ? fileName.slice(0,14)+'…' : fileName;
+  showToast(hasData ? `✅ ${fileName} 반영 완료` : '⚠️ 인식 가능한 데이터 없음');
+}
+
+/* ══ 파일 업로드 핸들러 (SheetJS 비동기 파싱) ══ */
+async function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const zone = document.getElementById('uploadZone');
+  zone.innerHTML = `<div class="uz-icon">⏳</div><h3>파싱 중...</h3><p>${file.name}</p>`;
+  zone.style.borderColor = 'var(--blue2)';
+  zone.style.background  = '#f0f6ff';
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb  = XLSX.read(buf, { type: 'array' });
+
+    /* 시트 → 2차원 배열 변환 */
+    function toAoA(name) {
+      const ws = wb.Sheets[name];
+      return ws ? XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) : null;
+    }
+
+    /* 월 열 인덱스 탐색 (1월~5월 헤더 행 검색) */
+    function findMonthCols(aoa) {
+      const order = ['1월','2월','3월','4월','5월'];
+      for (const row of aoa) {
+        const map = {};
+        order.forEach(m => {
+          const idx = row.findIndex(c => String(c).includes(m));
+          if (idx >= 0) map[m] = idx;
+        });
+        if (Object.keys(map).length >= 4) return map;
+      }
+      return null;
+    }
+
+    /* 키워드가 일치하는 행에서 월별 값 추출 */
+    function extractRow(aoa, keywords, mc) {
+      for (const row of aoa) {
+        const hit = row.some(c => keywords.some(kw =>
+          String(c).replace(/\s/g,'').toLowerCase()
+            .includes(kw.replace(/\s/g,'').toLowerCase())
+        ));
+        if (!hit) continue;
+        return ['1월','2월','3월','4월','5월'].map(m => {
+          const idx = mc[m];
+          const v   = idx !== undefined ? row[idx] : '';
+          return (v !== '' && v !== null && v !== undefined) ? +v : null;
+        });
+      }
+      return null;
+    }
+
+    const parsed = {};
+
+    /* 생산기술 시트 */
+    const aoa1 = toAoA('생산기술');
+    if (aoa1) {
+      const mc = findMonthCols(aoa1);
+      if (mc) {
+        const mw  = extractRow(aoa1, ['금형대기','금형 대기'], mc);
+        const mn  = extractRow(aoa1, ['설비정비','정비건수'], mc);
+        const mc2 = extractRow(aoa1, ['금형매입','매입비'], mc);
+        const ec  = extractRow(aoa1, ['설비수선','수선비'], mc);
+        const eb  = extractRow(aoa1, ['설비구매','구매비용'], mc);
+        if (mw)  parsed.moldWait  = mw;
+        if (mn)  parsed.maintCnt  = mn;
+        if (mc2) parsed.moldCost  = mc2;
+        if (ec)  parsed.equipCost = ec;
+        if (eb)  parsed.equipBuy  = eb;
+      }
+    }
+
+    /* 금형현황 시트 */
+    const aoa2 = toAoA('금형현황');
+    if (aoa2) {
+      const mc = findMonthCols(aoa2);
+      if (mc) {
+        const tw  = extractRow(aoa2, ['총금형','총 금형'], mc);
+        const mw2 = extractRow(aoa2, ['정비대기','정비 대기'], mc);
+        if (tw)  parsed.totalMold = tw;
+        if (mw2) parsed.maintWait = mw2;
+      }
+    }
+
+    /* 금형준수율 시트 */
+    const aoa3 = toAoA('금형준수율');
+    if (aoa3) {
+      const mc = findMonthCols(aoa3);
+      if (mc) {
+        const cr = extractRow(aoa3, ['준수율','SET-UP준수율','셋업준수율'], mc);
+        if (cr) parsed.compliance = cr;
+      }
+    }
+
+    applyParsedData(parsed, file.name);
+
+  } catch (err) {
+    zone.innerHTML = `<div class="uz-icon">❌</div><h3>파싱 오류</h3><p>${err.message || '파일을 읽을 수 없습니다.'}</p>`;
+    zone.style.borderColor = 'var(--red)';
+    zone.style.background  = '#fff0f0';
+    showToast('❌ 파일 파싱 실패');
+  }
 }
 
 /* 드래그앤드롭 */
